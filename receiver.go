@@ -12,7 +12,7 @@ type receiver struct {
 	name string
 
 	// typ is the type of the receiver.
-	typ string
+	typ *shortType
 
 	// field is the declaration of the receiver.
 	field *ast.Field
@@ -25,11 +25,11 @@ func checkReceivers(pass *analysis.Pass, receiverToDist map[receiver]int, cfg co
 			continue
 		}
 
-		if cfg.ignoreDecls.matchReceiver(recv) {
+		if checkNameAndDistance(recv.name, dist, cfg) {
 			continue
 		}
 
-		if checkNameAndDistance(recv.name, dist, cfg) {
+		if cfg.ignoreDecls.matchReceiver(recv) {
 			continue
 		}
 
@@ -43,5 +43,5 @@ func (r receiver) match(decl identDeclaration) bool {
 		return false
 	}
 
-	return decl.matchType(r.typ)
+	return decl.matchType(r.typ.String())
 }

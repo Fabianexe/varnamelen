@@ -12,7 +12,7 @@ type parameter struct {
 	name string
 
 	// typ is the type of the parameter.
-	typ string
+	typ *shortType
 
 	// field is the declaration of the parameter.
 	field *ast.Field
@@ -21,19 +21,19 @@ type parameter struct {
 // checkParams applies the analysis to parameters in paramToDist, according to cfg.
 func checkParams(pass *analysis.Pass, paramToDist map[parameter]int, cfg configuration) {
 	for param, dist := range paramToDist {
-		if param.isConventional() {
-			continue
-		}
-
 		if cfg.ignoreNames.contains(param.name) {
 			continue
 		}
 
-		if cfg.ignoreDecls.matchParameter(param) {
+		if checkNameAndDistance(param.name, dist, cfg) {
 			continue
 		}
 
-		if checkNameAndDistance(param.name, dist, cfg) {
+		if param.isConventional() {
+			continue
+		}
+
+		if cfg.ignoreDecls.matchParameter(param) {
 			continue
 		}
 
@@ -47,7 +47,7 @@ func (p parameter) match(decl identDeclaration) bool {
 		return false
 	}
 
-	return decl.matchType(p.typ)
+	return decl.matchType(p.typ.String())
 }
 
 // isConventional returns true if p matches a conventional Go parameter name and type,

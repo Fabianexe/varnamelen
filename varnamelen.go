@@ -179,14 +179,25 @@ func distances(pass *analysis.Pass, cfg configuration) distancesResult {
 
 	idents := identsImportsSwitches(pass, cfg)
 
+	typeNames := make(map[types.Type]*shortType)
+	typeName := func(typ types.Type) *shortType {
+		if name, ok := typeNames[typ]; ok {
+			return name
+		}
+		name := &shortType{typ: typ, imports: idents.imports}
+		typeNames[typ] = name
+		return name
+	}
+	typeSwitched := &shortType{name: "<type-switched>", resolved: true}
+
 	for _, ident := range idents.assignIdents {
 		assign := ident.Obj.Decl.(*ast.AssignStmt) //nolint:forcetypeassert // check is done in identsAndImports
 
-		var typ string
+		var typ *shortType
 		if isTypeSwitchAssign(assign, idents.switches) {
-			typ = "<type-switched>"
+			typ = typeSwitched
 		} else {
-			typ = shortTypeName(pass.TypesInfo.TypeOf(ident), idents.imports)
+			typ = typeName(pass.TypesInfo.TypeOf(ident))
 		}
 
 		variable := variable{
@@ -216,7 +227,7 @@ func distances(pass *analysis.Pass, cfg configuration) distancesResult {
 		} else {
 			variable := variable{
 				name:      ident.Name,
-				typ:       shortTypeName(pass.TypesInfo.TypeOf(ident), idents.imports),
+				typ:       typeName(pass.TypesInfo.TypeOf(ident)),
 				valueSpec: valueSpec,
 			}
 
@@ -229,7 +240,7 @@ func distances(pass *analysis.Pass, cfg configuration) distancesResult {
 
 		param := parameter{
 			name:  ident.Name,
-			typ:   shortTypeName(pass.TypesInfo.TypeOf(field.Type), idents.imports),
+			typ:   typeName(pass.TypesInfo.TypeOf(field.Type)),
 			field: field,
 		}
 
@@ -243,7 +254,7 @@ func distances(pass *analysis.Pass, cfg configuration) distancesResult {
 
 		param := namedReturn{
 			name:  ident.Name,
-			typ:   shortTypeName(pass.TypesInfo.TypeOf(ident), idents.imports),
+			typ:   typeName(pass.TypesInfo.TypeOf(ident)),
 			field: field,
 		}
 
@@ -257,7 +268,7 @@ func distances(pass *analysis.Pass, cfg configuration) distancesResult {
 
 		param := receiver{
 			name:  ident.Name,
-			typ:   shortTypeName(pass.TypesInfo.TypeOf(field.Type), idents.imports),
+			typ:   typeName(pass.TypesInfo.TypeOf(field.Type)),
 			field: field,
 		}
 
@@ -271,7 +282,7 @@ func distances(pass *analysis.Pass, cfg configuration) distancesResult {
 
 		param := typeParam{
 			name:  ident.Name,
-			typ:   shortTypeName(pass.TypesInfo.TypeOf(field.Type), idents.imports),
+			typ:   typeName(pass.TypesInfo.TypeOf(field.Type)),
 			field: field,
 		}
 

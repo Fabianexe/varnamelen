@@ -12,7 +12,7 @@ type typeParam struct {
 	name string
 
 	// typ is the type of the type parameter.
-	typ string
+	typ *shortType
 
 	// field is the field that declares the type parameter.
 	field *ast.Field
@@ -24,7 +24,7 @@ func (p typeParam) match(decl identDeclaration) bool {
 		return false
 	}
 
-	return decl.matchType(p.typ)
+	return decl.matchType(p.typ.String())
 }
 
 // checkTypeParams applies the analysis to type parameters in paramToDist, according to cfg.
@@ -34,11 +34,11 @@ func checkTypeParams(pass *analysis.Pass, paramToDist map[typeParam]int, cfg con
 			continue
 		}
 
-		if cfg.ignoreDecls.matchTypeParameter(param) {
+		if checkNameAndDistance(param.name, dist, cfg) {
 			continue
 		}
 
-		if checkNameAndDistance(param.name, dist, cfg) {
+		if cfg.ignoreDecls.matchTypeParameter(param) {
 			continue
 		}
 

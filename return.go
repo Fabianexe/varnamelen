@@ -12,7 +12,7 @@ type namedReturn struct {
 	name string
 
 	// typ is the type of the return value.
-	typ string
+	typ *shortType
 
 	// field is the declaration of the return value.
 	field *ast.Field
@@ -25,11 +25,11 @@ func checkReturns(pass *analysis.Pass, returnToDist map[namedReturn]int, cfg con
 			continue
 		}
 
-		if cfg.ignoreDecls.matchNamedReturn(ret) {
+		if checkNameAndDistance(ret.name, dist, cfg) {
 			continue
 		}
 
-		if checkNameAndDistance(ret.name, dist, cfg) {
+		if cfg.ignoreDecls.matchNamedReturn(ret) {
 			continue
 		}
 
@@ -43,5 +43,5 @@ func (r namedReturn) match(decl identDeclaration) bool {
 		return false
 	}
 
-	return decl.matchType(r.typ)
+	return decl.matchType(r.typ.String())
 }

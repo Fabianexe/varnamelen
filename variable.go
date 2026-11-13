@@ -13,7 +13,7 @@ type variable struct {
 	name string
 
 	// typ is the type of the variable.
-	typ string
+	typ *shortType
 
 	// assign is the assign statement that declares the variable.
 	assign *ast.AssignStmt
@@ -25,11 +25,15 @@ type variable struct {
 // checkVariables applies the analysis to variables in varToDist, according to cfg.
 func checkVariables(pass *analysis.Pass, varToDist map[variable]int, cfg configuration) { //nolint:gocognit // it's not that complicated
 	for variable, dist := range varToDist {
-		if variable.isConventional() {
+		if cfg.ignoreNames.contains(variable.name) {
 			continue
 		}
 
-		if cfg.ignoreNames.contains(variable.name) {
+		if checkNameAndDistance(variable.name, dist, cfg) {
+			continue
+		}
+
+		if variable.isConventional() {
 			continue
 		}
 
@@ -46,10 +50,6 @@ func checkVariables(pass *analysis.Pass, varToDist map[variable]int, cfg configu
 		}
 
 		if checkChannelReceiveOk(variable, cfg) {
-			continue
-		}
-
-		if checkNameAndDistance(variable.name, dist, cfg) {
 			continue
 		}
 
@@ -92,11 +92,11 @@ func (v variable) match(decl identDeclaration) bool {
 		return false
 	}
 
-	if v.typ == "" {
+	if v.typ.String() == "" {
 		return false
 	}
 
-	return decl.matchType(v.typ)
+	return decl.matchType(v.typ.String())
 }
 
 // isTypeAssertOk returns true if v is an "ok" variable that holds the bool return value of a type assertion.
